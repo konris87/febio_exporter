@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='utf-8'?>
+<febio_spec version="3.0">
+    <Module type="solid"></Module>
+    <Globals>
+        <Constants>
+            <T>0</T>
+            <R>0</R>
+            <Fc>0</Fc>
+        </Constants>
+    </Globals>
+    <Material></Material>
+    <Mesh></Mesh>
+    <MeshDomains></MeshDomains>
+    <MeshData></MeshData>
+    <Initial></Initial>
+    <Boundary></Boundary>
+    <Rigid></Rigid>
+    <Loads></Loads>
+    <Contact></Contact>
+    <Control>
+        <analysis>STATIC</analysis>
+        <time_steps>20</time_steps>
+        <step_size>0.05</step_size>
+        <solver>
+            <max_refs>25</max_refs>
+            <max_ups>0</max_ups>
+            <diverge_reform>1</diverge_reform>
+            <reform_each_time_step>1</reform_each_time_step>
+            <dtol>0.01</dtol>
+            <etol>0.1</etol>
+            <rtol>0</rtol>
+            <lstol>0.9</lstol>
+            <min_residual>0.001</min_residual>
+            <qnmethod>BROYDEN</qnmethod>
+            <rhoi>-2</rhoi>
+            <symmetric_stiffness>0</symmetric_stiffness>
+        </solver>
+        <time_stepper>
+            <dtmin>1e-08</dtmin>
+            <dtmax lc="1"></dtmax>
+            <max_retries>30</max_retries>
+            <opt_iter>10</opt_iter>
+        </time_stepper>
+    </Control>
+</febio_spec>
