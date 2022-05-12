@@ -130,7 +130,7 @@ def translate(nodes, t):
     return np.array([x + np.array(t) for x in nodes])  # Python 3.6.7
 
 
-def scale(nodes, s1=1, s2=1, s3=1):
+def scale(nodes, s):
     """Scales a set of nodes by s.
 
     Parameters
@@ -147,14 +147,14 @@ def scale(nodes, s1=1, s2=1, s3=1):
 
     """
     # return np.array(map(lambda x: np.multiply(x, s), nodes))
-
-    # if s =! None:
-    #     scaled_nodes = np.array([np.multiply(x, s) for x in nodes]) # Python 3
-    # else:
     scaled_nodes = copy.copy(nodes)
-    scaled_nodes[:, 0] *= s1
-    scaled_nodes[:, 1] *= s2
-    scaled_nodes[:, 2] *= s3
+    if s is not None:
+        scaled_nodes = np.array([np.multiply(x, s) for x in nodes]) # Python 3
+    # else:
+    # scaled_nodes = copy.copy(nodes)
+    # scaled_nodes[:, 0] *= s1
+    # scaled_nodes[:, 1] *= s2
+    # scaled_nodes[:, 2] *= s3
 
     return scaled_nodes
 

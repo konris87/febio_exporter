@@ -3,7 +3,7 @@
 # @Author:      kostas
 # @Email:   krisvas@ece.upatras.gr
 # @Filename:    contact.py
-
+import copy
 import xml.etree.ElementTree as ET
 
 __doc__ = "Contact submodule to create contact between surface pairs"
@@ -24,7 +24,6 @@ class Contact:
         """Adds a contact model.
 
         Parameters
-        ----------
 
         name: [string] name of the element
 
@@ -35,6 +34,8 @@ class Contact:
 
         parameters: [dictionary] dictionary containing the parameters of the
                     contact model
+
+        root: The parent xml element
 
         To do
         -----
@@ -78,12 +79,94 @@ class Contact:
         else:
             self.root = root
 
-        surface_pair = ET.SubElement(root, 'SurfacePair',
+        surface_pair = ET.SubElement(self.root, 'SurfacePair',
                                      attrib={'name': name})
         # ET.SubElement(surface_pair, 'master',
         primary = ET.SubElement(surface_pair, 'primary')
         primary.text = master_surface
         secondary = ET.SubElement(surface_pair, 'secondary')
         secondary.text = slave_surface
+
+    @staticmethod
+    def get_default_sliding_elastic_contact_parameters():
+        """Gets the contact sliding-elastic parameters.
+
+        Returns
+        -------
+
+        parameters: [dictionary]
+
+        FEBio Defaults
+        --------------
+
+            'laugon': 0,
+            'tolerance': 0.2,
+            'penalty': 1,
+            'two_pass': 0,
+            'auto_penalty': 0,
+            'fric_coeff': 0,
+            'fric_penalty': 0,
+            'search_tol': 0.01,
+            'minaug': 0,
+            'maxaug': 10,
+            'gaptol': 0,
+            'seg_up': 0
+
+        """
+        return copy.copy({
+            'laugon': 0,
+            'tolerance': 0.2,
+            'gaptol': 0,
+            'penalty': 1,
+            'auto_penalty': 0,
+            'two_pass': 0,
+            'symmetric_stiffness': 0,
+            'search_tol': 0.01,
+            'search_radius': 0,
+            'minaug': 0,
+            'maxaug': 10,
+            'seg_up': 0,
+            'fric_coeff': 0,
+            'smooth_aug': 0,
+            'node_reloc': 0,
+            'flip_primary': 0,
+            'flip_secondary': 0,
+            'knmult': 0,
+            'update_penalty': 0,
+            'shell_bottom_primary': 0,
+            'shell_bottom_secondary': 0
+        })
+
+    @staticmethod
+    def get_default_tied_elastic_contact_parameters():
+        """
+
+        """
+        return copy.copy({
+            'laugon': 1,
+            'tolerance': 0,
+            'gaptol': 0,
+            'penalty': 1e3,
+            'auto_penalty': 0,
+            'two_pass': 0,
+            'knmult': 1,
+            'search_tol': 0.01,
+            'symmetric_stiffness': 0,
+            'search_radius': 1,
+            'minaug': 0,
+            'maxaug': 10
+        })
+
+    @staticmethod
+    def get_default_tied_facet_on_facet():
+        """
+
+        """
+        return copy.copy({
+            'laugon': 1,
+            'tolerance': 0,
+            'penalty': 1e3,
+            'minaug': 0,
+            'maxaug': 10})
 
 #  TODO Implement other types of contacts, eg. Surface - Nodes

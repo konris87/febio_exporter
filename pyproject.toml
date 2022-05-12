@@ -9,7 +9,8 @@ python = "^3.8"
 numpy = "^1.22.3"
 sympy = "^1.10.1"
 matplotlib = "^3.5.2"
-meshio = "^5.3.4"
+meshio = "5.2.6"
+vedo = "^2022.2.3"
 
 [tool.poetry.dev-dependencies]
 

@@ -21,3 +21,4 @@ The scripts are compatible with Python 3.8.
 # License
 
 [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html)
+![embl_logo](http://www.vvr.ece.upatras.gr/wp-content/uploads/sites/5/2020/01/vvr_logo_41.png)

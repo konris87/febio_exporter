@@ -4,6 +4,7 @@
 # @Email   : krisvas@ece.upatras.gr
 # @File    : rigid.py
 import xml.etree.ElementTree as ET
+import copy
 from utils import to_xml_field
 
 __doc__ = "Rigid submodule that is used to create rigid body DoFs"
@@ -106,3 +107,29 @@ class Rigid:
                 subel.text = value
 
         return self.parent.loadcurve_id - 1
+
+    #  TODO add description about paramters
+    @staticmethod
+    def get_rigid_body_prescribed_motion_default_parameters():
+        """
+
+        """
+        return copy.copy({"rb": "",
+                          "dof": "",
+                          "scale": str(1),
+                          "constraint_type": "prescribe",
+                          "relative": str(0)
+                          })
+
+    @staticmethod
+    def get_rigid_body_prescribed_force_default_parameters():
+        """
+        FEBio default
+        -------------
+        load_type: 0
+        """
+        return copy.copy({"rb": str(0),
+                          "dof": "",
+                          "scale": str(1),
+                          "constraint_type": "force",
+                          "load_type": str(0)})

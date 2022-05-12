@@ -3,10 +3,12 @@
 # @Author:      kostas
 # @Email:   krisvas@ece.upatras.gr
 # @Filename:    constraints.py
+import copy
 import xml.etree.ElementTree as ET
 from utils import to_xml_field
 
-__doc__ = "Contact submodule to create contact between surface pairs"
+__doc__ = "Constraints submodule to create rigid joints," \
+          " rigid connectors and prestrain rules"
 __all__ = ["Constraints"]
 
 
@@ -112,3 +114,86 @@ class Constraints:
         for key, value in parameters.items():
             item = ET.SubElement(spring, key)
             item.text = to_xml_field(value)
+
+    @staticmethod
+    def get_default_cylindrical_joint_parameters():
+        """Gets the default cylindrical joint parameters.
+
+        Returns
+        -------
+
+        parameters: [dictionary]
+        """
+        return copy.copy({
+            'body_a': 0,
+            'body_b': 0,
+            'tolerance': 0,
+            'gaptol': 0.01,
+            'angtol': 0.01,
+            'force_penalty': 1e4,
+            'moment_penalty': 1e5,
+            'joint_origin': [0, 0, 0],
+            'joint_axis': [1, 0, 0],
+            'transverse_axis': [0, 0, 0],
+            'minaug': 0,
+            'maxaug': 10,
+            'prescribed_translation': 0,
+            'translation': 0,
+            'force': 0,
+            'prescribed_rotation': 0,
+            'rotation': 0,
+            'moment': 0
+        })
+
+    @staticmethod
+    def get_default_revolute_joint_parameters():
+        """Gets the default cylindrical joint parameters.
+
+        Returns
+        -------
+
+        parameters: [dictionary]
+        """
+        return copy.copy({
+            'body_a': 0,
+            'body_b': 0,
+            'tolerance': 0,
+            'gaptol': 0.01,
+            'angtol': 0.01,
+            'force_penalty': 1e4,
+            'moment_penalty': 1e5,
+            'auto_penalty': 1,
+            'joint_origin': [0, 0, 0],
+            'rotation_axis': [1, 0, 0],
+            'transverse_axis': [0, 0, 0],
+            'minaug': 0,
+            'maxaug': 10,
+            'prescribed_rotation': 0,
+            'rotation': 0,
+            'moment': 0
+        })
+
+    @staticmethod
+    def get_default_lock_joint_parameters():
+        """Gets the default cylindrical joint parameters.
+
+        Returns
+        -------
+
+        parameters: [dictionary]
+        """
+        return copy.copy({
+            'body_a': 0,
+            'body_b': 0,
+            'tolerance': 0,
+            'gaptol': 0.01,
+            'angtol': 0.01,
+            'force_penalty': 1e4,
+            'moment_penalty': 1e5,
+            'auto_penalty': 1,
+            'joint_origin': [0, 0, 0],
+            'first_axis': [1, 0, 0],
+            'second_axis': [1, 0, 0],
+            'minaug': 0,
+            'maxaug': 10,
+        })

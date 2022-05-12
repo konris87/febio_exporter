@@ -3,13 +3,12 @@
 # @Author:      kostas
 # @Email:   krisvas@ece.upatras.gr
 # @Filename:    material.py
-
+import copy
 import xml.etree.ElementTree as ET
 from utils import to_xml_field
 
 __doc__ = "Material submodule to create a new material connectivity. " \
-          "FEBio default Material parameters are inside the material library " \
-          "directory"
+          "FEBio default Material parameters are provided as static functions"
 __all__ = ["Material"]
 
 
@@ -81,3 +80,63 @@ class Material:
             return self.parent.material_id - 1, self.parent.loadcurve_id - 1
         else:
             return self.parent.material_id - 1
+
+    @staticmethod
+    def get_default_fung_orthotropic_parameters():
+        """Gets the Fung orthotroptic meniscus materials parameters.
+
+        Returns
+        -------
+
+        parameters: [dictionary]
+
+        """
+        return copy.copy({
+            'type': 'Fung orthotropic',
+            'density': 0,
+            'E1': 0,
+            'E2': 0,
+            'E3': 0,
+            'G12': 0,
+            'G23': 0,
+            'G31': 0,
+            'v12': 0,
+            'v23': 0,
+            'v31': 0,
+            'c': 0,
+            'k': 0
+        })
+
+    @staticmethod
+    def get_default_mooney_rivlin_parameters():
+        """Gets the default Mooney-Rivlin materials parameters.
+
+        Returns
+        -------
+
+        parameters: [dictionary]
+
+        """
+        return copy.copy({
+            'type': 'Mooney-Rivlin',
+            'density': 0,
+            'c1': 0,
+            'c2': 0,
+            'k': 0
+        })
+
+    @staticmethod
+    def get_default_rigid_body_parameters():
+        """Gets default rigid-body materials parameters.
+
+        Returns
+        -------
+
+        parameters: [dictionary]
+
+        """
+        return copy.copy({
+            'type': 'rigid body',
+            'density': 0,
+            'center_of_mass': [0, 0, 0]
+        })

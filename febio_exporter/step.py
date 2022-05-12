@@ -3,7 +3,7 @@
 # @Author:      kostas
 # @Email:   krisvas@ece.upatras.gr
 # @Filename:    step.py
-
+import copy
 import xml.etree.ElementTree as ET
 
 __doc__ = "Step submodule to add control steps."
@@ -29,6 +29,7 @@ class Step:
         self.root = None
         self.control = None
         self.loadcurve_id = None
+        self.initial = None
 
     def add_step(self, name, parameters, use_must_point=False,
                  restart_step=False,
@@ -74,7 +75,7 @@ class Step:
             self.control = self.parent.control
 
         if add_init_prestrain:
-            initial = ET.SubElement(self.root, 'Initial')
+            self.initial = ET.SubElement(self.root, 'Initial')
         for key, value in parameters.items():
             if key == 'time_stepper':
                 time_stepper = ET.SubElement(self.control, key)
@@ -97,7 +98,7 @@ class Step:
                 item.text = str(1)
                 item.set('file', value)
             elif key == 'initial':
-                item = ET.SubElement(initial, 'ic',
+                item = ET.SubElement(self.initial, 'ic',
                                      attrib={'type': 'prestrain'})
                 item1 = ET.SubElement(item, 'init')
                 item1.text = str(value['init'])
@@ -114,3 +115,43 @@ class Step:
 
         return self.root, self.loadcurve_id
 
+    @staticmethod
+    def get_default_step_parameters():
+        """Gets the default step parameters.
+
+        Returns
+        -------
+
+        parameters: [dictionary]
+
+        """
+        return copy.copy({
+            'analysis': 'static',
+            'time_steps': 20,
+            'step_size': 0.05,
+            'solver': {
+                'max_refs': 25,
+                # 'max_refs': 15,
+                'max_ups': 0,
+                'diverge_reform': 1,
+                'reform_each_time_step': 1,
+                'dtol': 0.01,
+                'etol': 0.1,
+                'rtol': 0,
+                'lstol': 0.9,
+                'min_residual': 0.001,
+                'qnmethod': 'BROYDEN',
+                'rhoi': -2,
+                'symmetric_stiffness': 0,
+            },
+            'time_stepper': {
+                'dtmin': 0.00000001,
+                'dtmax': 0.05,
+                'max_retries': 30,
+                'opt_iter': 10,
+                # 'aggressiveness': 0
+            }
+            # 'alpha': 1,
+            # 'beta': 0.25,
+            # 'gamma': 0.5
+        })

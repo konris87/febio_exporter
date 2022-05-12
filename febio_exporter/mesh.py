@@ -57,12 +57,13 @@ class Mesh:
 
     def add_part(self, name, material_id, element_type, nodes, elements,
                  scale=(1, 1, 1), rotate=(0, 0, 0, 1), translate=(0, 0, 0),
-                 construct_part=False):
+                 construct_part=False, root=None):
         """Adds a part to the geometries of the model.
 
         Parameters
         ----------
 
+        root
         name: [string] name of the element
 
         material_id: [integer] the associated material id
@@ -113,6 +114,7 @@ class Mesh:
         node_offset = self.add_nodes(name + '_nodes', nodes, part)
         self.add_element(name + '_elements', material_id, element_type,
                          elements, node_offset, part)
+
         return part, node_offset
 
     def add_surface(self, name, element_type, elements, node_offset,

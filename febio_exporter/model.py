@@ -13,6 +13,8 @@ import copy
 import os
 import xml.etree.ElementTree as ET
 from utils import export, indent
+import subprocess
+import vedo
 
 __doc__ = "Submodule to create, export and edit a .feb model"
 __all__ = ["FEBioExporter"]
@@ -60,6 +62,7 @@ class FEBioExporter:
         self.loaddata = None
         self.output = None
         self.step_counter = 1
+        self.name = ''
 
     # def enable_restart(self, file_name):
     #     """Enables the febio restart mechanism.
@@ -117,6 +120,7 @@ class FEBioExporter:
         if '.feb' not in file_name:
             file_name += '.feb'
 
+        file = os.path.abspath(dir_name + file_name)
         # xmlstr = minidom.parseString(ET.tostring(root)).toprettyxml(indent='  ')
         indent(self.root)
         tree = ET.ElementTree(self.root)
@@ -256,232 +260,64 @@ class FEBioExporter:
         archive.text = restart_file
         self.loaddata = ET.SubElement(self.root, 'LoadData')
 
-    @staticmethod
-    def get_default_rigid_parameters():
-        """Gets default rigid-body materials parameters.
+    def execute(self, model_filename):
+        """
+        Function that executes FEBio version 3 through the command line.
+        FEBio should be in the environment PATH
+
+        Parameters
+        ----------
+        model_filename: the name of the created file
 
         Returns
         -------
 
-        parameters: [dictionary]
-
         """
-        return copy.copy({
-            'type': 'rigid body',
-            'density': 0,
-            'center_of_mass': [0, 0, 0]
-        })
+        subprocess.run(["febio3", "-i", '{}'.format(model_filename)])
 
-    @staticmethod
-    def get_default_mooney_rivlin_parameters():
-        """Gets the default Mooney-Rivlin materials parameters.
+    def visualize(self, geometries):
+        """
+        Function to view model geometry using vedo
+
+        Parameters
+        ----------
+        geometries
 
         Returns
         -------
 
-        parameters: [dictionary]
-
         """
-        return copy.copy({
-            'type': 'Mooney-Rivlin',
-            'density': 0,
-            'c1': 0,
-            'c2': 0,
-            'k': 0
-        })
+        meshes = []
+        names = []
+        # create vedo meshes from points and connectivity
+        for idx in range(len(geometries)):
+            points = geometries[idx][0]
+            cells = geometries[idx][1]
+            cell_type = geometries[idx][2]
+            cells_nr = cells[cell_type].shape[0]
+            names.append(geometries[idx][3])
+            if cell_type == 'triangle':
+                meshes.append(vedo.Mesh([points, cells[cell_type]]).legend(
+                    geometries[idx][3]
+                ))
+            elif cell_type == 'hexahedron':
+                meshes.append(vedo.UGrid([points, cells[cell_type],
+                                          [12 for j in range(cells_nr)]]))
+            else:
+                #  TODO implement tetrahedral meshes
+                raise RuntimeError('Mesh Type not implemented yet')
 
-    @staticmethod
-    def get_default_fung_orthotropic_parameters():
-        """Gets the Fung orthotroptic meniscus materials parameters.
+        # create a colormap for the provided meshes
+        colors = vedo.buildPalette('g', 'r', N=len(meshes) + 1)
 
-        Returns
-        -------
+        # create a vedo plotter
+        plt = vedo.Plotter(title="{}".format(self.name))
+        for idx, mesh in enumerate(meshes):
+            plt += mesh.c(colors[idx])
+            # plt += vedo.LegendBox([mesh])
 
-        parameters: [dictionary]
-
-        """
-        return copy.copy({
-            'type': 'Fung orthotropic',
-            'density': 0,
-            'E1': 0,
-            'E2': 0,
-            'E3': 0,
-            'G12': 0,
-            'G23': 0,
-            'G31': 0,
-            'v12': 0,
-            'v23': 0,
-            'v31': 0,
-            'c': 0,
-            'k': 0
-        })
-
-    @staticmethod
-    def get_default_step_parameters():
-        """Gets the default step parameters.
-
-        Returns
-        -------
-
-        parameters: [dictionary]
-
-        """
-        return copy.copy({
-            'time_steps': 10,
-            'step_size': 0.1,
-            'max_refs': 15,
-            'max_ups': 10,
-            'diverge_reform': 1,
-            'reform_each_time_step': 1,
-            'dtol': 0.001,
-            'etol': 0.01,
-            'rtol': 0,
-            'lstol': 0.9,
-            'min_residual': 1e-20,
-            'qnmethod': 0,
-            'time_stepper': {
-                'dtmin': 0.01,
-                'dtmax': 0.1,
-                'max_retries': 5,
-                'opt_iter': 10
-            },
-            'analysis': {
-                'type': 'static'
-            },
-            'symmetric_stiffness': 1,
-            'alpha': 1,
-            'beta': 0.25,
-            'gamma': 0.5
-        })
-
-    @staticmethod
-    def get_default_sliding_elastic_contact_parameters():
-        """Gets the contact sliding-elastic parameters.
-
-        Returns
-        -------
-
-        parameters: [dictionary]
-
-        FEBio Defaults
-        --------------
-
-            'laugon': 0,
-            'tolerance': 0.2,
-            'penalty': 1,
-            'two_pass': 0,
-            'auto_penalty': 0,
-            'fric_coeff': 0,
-            'fric_penalty': 0,
-            'search_tol': 0.01,
-            'minaug': 0,
-            'maxaug': 10,
-            'gaptol': 0,
-            'seg_up': 0
-
-        """
-        return copy.copy({
-            'laugon': 0,
-            'tolerance': 0.2,
-            'penalty': 1,
-            'two_pass': 0,
-            'auto_penalty': 0,
-            'fric_coeff': 0,
-            # 'fric_penalty': 0,
-            'search_tol': 0.01,
-            'minaug': 0,
-            'maxaug': 10,
-            'gaptol': 0,
-            'seg_up': 0,
-            'fric_coeff': 0,
-            'smooth_aug': 0,
-            'node_reloc': 0,
-            'flip_master': 0,
-            'flip_slave': 0
-        })
-
-    @staticmethod
-    def get_default_cylindrical_joint_parameters():
-        """Gets the default cylindrical joint parameters.
-
-        Returns
-        -------
-
-        parameters: [dictionary]
-        """
-        return copy.copy({
-            'body_a': 0,
-            'body_b': 0,
-            'tolerance': 0,
-            'gaptol': 0.01,
-            'angtol': 0.01,
-            'force_penalty': 1e4,
-            'moment_penalty': 1e5,
-            'joint_origin': [0, 0, 0],
-            'joint_axis': [1, 0, 0],
-            'transverse_axis': [0, 0, 0],
-            'minaug': 0,
-            'maxaug': 10,
-            'prescribed_translation': 0,
-            'translation': 0,
-            'force': 0,
-            'prescribed_rotation': 0,
-            'rotation': 0,
-            'moment': 0
-        })\
-
-    @staticmethod
-    def get_default_revolute_joint_parameters():
-        """Gets the default cylindrical joint parameters.
-
-        Returns
-        -------
-
-        parameters: [dictionary]
-        """
-        return copy.copy({
-            'body_a': 0,
-            'body_b': 0,
-            'tolerance': 0,
-            'gaptol': 0.01,
-            'angtol': 0.01,
-            'force_penalty': 1e4,
-            'moment_penalty': 1e5,
-            'auto_penalty': 1,
-            'joint_origin': [0, 0, 0],
-            'rotation_axis': [1, 0, 0],
-            'transverse_axis': [0, 0, 0],
-            'minaug': 0,
-            'maxaug': 10,
-            'prescribed_rotation': 0,
-            'rotation': 0,
-            'moment': 0
-        })\
-
-    @staticmethod
-    def get_default_lock_joint_parameters():
-        """Gets the default cylindrical joint parameters.
-
-        Returns
-        -------
-
-        parameters: [dictionary]
-        """
-        return copy.copy({
-            'body_a': 0,
-            'body_b': 0,
-            'tolerance': 0,
-            'gaptol': 0.01,
-            'angtol': 0.01,
-            'force_penalty': 1e4,
-            'moment_penalty': 1e5,
-            'auto_penalty': 1,
-            'joint_origin': [0, 0, 0],
-            'first_axis': [1, 0, 0],
-            'second_axis': [1, 0, 0],
-            'minaug': 0,
-            'maxaug': 10,
-        })
+        plt.show()
+        plt.close()
 
     @staticmethod
     def get_default_plot_file_parameters():

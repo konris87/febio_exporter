@@ -8,7 +8,7 @@ import copy
 from model import FEBioExporter
 from step import Step
 from loaddata import Loaddata
-from knee_data import FEBio_step
+from examples.knee_data import FEBio_step
 
 model = FEBioExporter()
 
