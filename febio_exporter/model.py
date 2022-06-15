@@ -12,7 +12,7 @@
 import copy
 import os
 import xml.etree.ElementTree as ET
-from utils import export, indent
+from febio_exporter.utils import export, indent
 import subprocess
 import vedo
 
@@ -116,11 +116,16 @@ class FEBioExporter:
         file_name: [string] the file path (.feb can be omitted)
 
         """
-
+        #  TODO add implementation for both windows & ubuntu
         if '.feb' not in file_name:
             file_name += '.feb'
 
-        file = os.path.abspath(dir_name + file_name)
+        file = os.path.abspath(os.path.join(dir_name, file_name))
+        if not os.path.isdir(dir_name):
+            os.makedirs(dir_name)
+            print("created folder : ", dir_name)
+        else:
+            print("output_dir exists")
         # xmlstr = minidom.parseString(ET.tostring(root)).toprettyxml(indent='  ')
         indent(self.root)
         tree = ET.ElementTree(self.root)
@@ -128,7 +133,7 @@ class FEBioExporter:
         #     # f.write(xmlstr.encode("utf-8"))
         #     f.write(ET.tostring(root, xml_declaration='xml',
         #                         short_empty_elements=False))
-        tree.write(file_name,
+        tree.write(file,
                    encoding="utf-8", xml_declaration=True,
                    short_empty_elements=False)
 
@@ -243,6 +248,34 @@ class FEBioExporter:
             # retrieve the last curve id in order to append new curves
             self.loadcurve_id = last_curve_id + 1
 
+    def add_output(self, plot_file_parameters, logfile_parameters):
+        """Sets the output parameters of the analysis.
+
+        Parameters
+        ----------
+
+        plot_file_parameters: [dictionary] output variables
+        logfile_parameters: [dictionary] logfile parameters
+        """
+        self.output = ET.SubElement(self.root, 'Output')
+        plotfile = ET.SubElement(self.output, 'plotfile',
+                                 attrib={'type': 'febio'})
+        for key, value in plot_file_parameters.items():
+            if value == 1:
+                var = ET.SubElement(plotfile, 'var', attrib={'type': key})
+
+        if logfile_parameters is not None:
+            logfile = ET.SubElement(self.output, 'logfile')
+            for key, value in logfile_parameters.items():
+                for sub_key, sub_value in value.items():
+                    var = ET.SubElement(logfile, key)
+                    var.set('name', sub_key)
+                    var.set('data', sub_value['data'])
+                    if sub_value['file']:
+                        var.set('file', sub_value['file'])
+                    if sub_value['ids']:
+                        var.text = sub_value['ids']
+
     def FEBio_Restarter(self, restart_file):
         """
         Function that enables FEBio restart using a damp file
@@ -260,20 +293,22 @@ class FEBioExporter:
         archive.text = restart_file
         self.loaddata = ET.SubElement(self.root, 'LoadData')
 
-    def execute(self, model_filename):
+    def execute(self, model_filename, directory):
         """
         Function that executes FEBio version 3 through the command line.
         FEBio should be in the environment PATH
 
         Parameters
         ----------
+        directory
         model_filename: the name of the created file
 
         Returns
         -------
 
         """
-        subprocess.run(["febio3", "-i", '{}'.format(model_filename)])
+        subprocess.run(["febio3", "-i", '{}'.format(model_filename)],
+                       cwd=directory)
 
     def visualize(self, geometries):
         """
@@ -313,7 +348,7 @@ class FEBioExporter:
         # create a vedo plotter
         plt = vedo.Plotter(title="{}".format(self.name))
         for idx, mesh in enumerate(meshes):
-            plt += mesh.c(colors[idx])
+            plt += mesh.c(colors[idx]).lw(5)
             # plt += vedo.LegendBox([mesh])
 
         plt.show()

@@ -5,7 +5,7 @@
 # @File    : rigid.py
 import xml.etree.ElementTree as ET
 import copy
-from utils import to_xml_field
+from febio_exporter.utils import to_xml_field
 
 __doc__ = "Rigid submodule that is used to create rigid body DoFs"
 __all__ = ["Rigid"]

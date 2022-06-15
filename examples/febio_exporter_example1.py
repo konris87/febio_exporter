@@ -13,10 +13,9 @@ Constructs a simple model containing two rigid bodies and one
 
 """
 import copy
-import vedo
 import numpy as np
 import meshio
-from utils import translate, scale
+from febio_exporter.utils import translate, scale
 from febio_exporter import model, mesh, material, boundary, rigid, loaddata, \
     step, contact
 
@@ -33,12 +32,16 @@ loadcurves = loaddata.Loaddata(model)
 steps = step.Step(model)
 
 # set a flag to execute FEBio at the end of model creation
-execute_model = 0
+execute_model = 1
 
 # set a flag to visualize the geometry prior to execution
-visualize_mesh = True
+visualize_mesh = 1
 
-# geometries
+################################################################################
+# Geometries and Materials
+################################################################################
+
+# load geometries, build geometry parts, and assign materials
 cube = meshio.read('./data/cube.stl')
 cube_hex_mesh = meshio.read("data/cube_1.msh")
 
@@ -47,14 +50,14 @@ bottom_cube = copy.copy(cube)
 bottom_cube_material_parameters = \
     materials.get_default_rigid_body_parameters()
 bottom_cube_material_parameters['density'] = 1
-bottom_cube_material_parameters['center_of_mass'] = [0, 0, -2.5]
+bottom_cube_material_parameters['center_of_mass'] = [0, 0, -1.5]
 bottom_cube_material_id = materials.add_material(
     'bottom_cube_material',
     bottom_cube_material_parameters)
 
 meshes.add_domain('bottom_cube', 'bottom_cube_material', 'Shell')
 bottom_cube_part = None
-bottom_cube_nodes = scale(translate(bottom_cube.points, [0.0, 0.0, -2.5]),
+bottom_cube_nodes = scale(translate(bottom_cube.points, [0.0, 0.0, -1.5]),
                           [2.0, 2.0, 1.0]),
 bottom_cube_node_offset = meshes.add_nodes(
     'bottom_cube_nodes',
@@ -82,7 +85,7 @@ layer_material_parameters['v31'] = 0.1
 layer_material_parameters['c'] = 1
 layer_material_parameters['k'] = 10
 
-# create bottol layer material
+# create bottom layer material
 bottom_layer_material_id = materials.add_material('bottom_layer_material',
                                                   layer_material_parameters)
 
@@ -90,7 +93,7 @@ meshes.add_domain('bottom_layer', 'bottom_layer_material', 'Solid')
 
 bottom_layer_nodes = translate(scale(
     translate(cube_hex_mesh.points, [-0.5, -0.5, -0.5]),
-    [4, 4, 0.5]), [0.0, 0.0, -1.25]),
+    [4, 4, 0.5]), [0.0, 0.0, -0.25]),
 bottom_layer_part, bottom_layer_node_offset = meshes.add_part(
     'bottom_layer',
     bottom_layer_material_id,
@@ -103,14 +106,18 @@ bottom_layer_part, bottom_layer_node_offset = meshes.add_part(
 top_layer_material_id = materials.add_material('top_layer_material',
                                                layer_material_parameters)
 meshes.add_domain('top_layer', 'top_layer_material', 'Solid')
+
+top_layer_nodes = translate(
+    scale
+    (translate(cube_hex_mesh.points,
+               [-0.5, -0.5, -0.5]),
+     [2, 2, 0.5]), [0.0, 0.0, 0.25]),
+
 top_layer_part, top_layer_node_offset = meshes.add_part(
     'top_layer',
     top_layer_material_id,
     'hex8',
-    translate(
-        scale(
-            translate(cube_hex_mesh.points, [-0.5, -0.5, -0.5]),
-            [2, 2, 0.5]), [0.0, 0.0, -0.25]),
+    top_layer_nodes[0],
     # cube_hex_mesh.points,
     cube_hex_mesh.cells_dict['hexahedron'],
     construct_part=construct_part, root=None)
@@ -120,7 +127,7 @@ top_cube = copy.copy(cube)
 top_cube_material_properties = \
     materials.get_default_rigid_body_parameters()
 top_cube_material_properties['density'] = 1
-top_cube_material_properties['center_of_mass'] = [0, 0, 2]
+top_cube_material_properties['center_of_mass'] = [0, 0, 1.5]
 top_cube_material_id = materials.add_material('top_cube_material',
                                               top_cube_material_properties)
 
@@ -137,6 +144,10 @@ meshes.add_element('top_cube_elements',
                    top_cube.cells_dict['triangle'],
                    top_cube_node_offset,
                    top_cube_part)
+
+################################################################################
+# Rigid Connectors
+################################################################################
 
 # bottom_cube - layer connector
 # first define a nodeset that contains the nodes of the layer that will be
@@ -170,6 +181,9 @@ boundaries.add_rigid_connector('top_layer_2_top_connector',
                                top_cube_material_id,
                                'top_layer_to_top_cube_nodes')
 
+################################################################################
+# Contacts
+################################################################################
 # add a sliding elastic contact between the layer top surface and the bottom
 # surface of the upper cube
 top_layer_surfaces = np.array([
@@ -218,6 +232,9 @@ contacts.add_contact_model(
     sliding_elastic_parameters
 )
 
+################################################################################
+# Controls
+################################################################################
 # add a control step
 steps.step_counter = 1
 step_parameters = steps.get_default_step_parameters()
@@ -235,7 +252,9 @@ step, step_lc = steps.add_step("Step_0", step_parameters, True)
 loadcurves.add_loadcurve(step_lc, 'step', 'constant',
                          must_points, np.ones(len(must_points)))
 
-# boundary conditions
+################################################################################
+# Boundary Conditions
+################################################################################
 # bottom cube is fixed
 rigid.add_rigid_body_fixed_constraint('bottom_cube_constraints',
                                       bottom_cube_material_id,
@@ -254,31 +273,35 @@ top_cube_load_z_id = rigid.add_rigid_body_prescribed_constraint(
     'top_cube_prescribed_force_z',
     load_parameters)
 
-top_cube_load_z_vec = np.round(np.linspace(0.0, -2.0, num=len(must_points)), 3)
+top_cube_load_z_vec = np.round(np.linspace(0.0, -20, num=len(must_points)), 3)
 
 loadcurves.add_loadcurve(top_cube_load_z_id,
                          'linear', 'constant',
                          must_points,
                          top_cube_load_z_vec)
-# export
-model.name = 'febio_example_1'
-# model_file = 'febio_example_1.feb'
-model.export('', model.name)
 
+################################################################################
+# Export Model
+################################################################################
+model.name = 'febio_example_1'
+model.export('./models/example_1', model.name)
+
+################################################################################
 # visualize
+################################################################################
 if visualize_mesh:
     model.visualize([[top_cube_nodes, top_cube.cells_dict, 'triangle',
                       'top_cube'],
                      [bottom_cube_nodes[0], bottom_cube.cells_dict,
                       'triangle', 'bottom_cube'],
                      [bottom_layer_nodes[0], cube_hex_mesh.cells_dict,
-                         'hexahedron', 'bottom_layer']
+                      'hexahedron', 'bottom_layer'],
+                     [top_layer_nodes[0], cube_hex_mesh.cells_dict,
+                      'hexahedron', 'top_layer']
                      ])
 
-    # model.visualize([[bottom_layer_nodes[0], cube_hex_mesh.cells_dict,
-    #                   'hexahedron', 'layer']
-    #                  ])
-
+################################################################################
 # execute
+################################################################################
 if execute_model:
-    model.execute('{}.feb'.format(model.name))
+    model.execute('{}.feb'.format(model.name), './models/example_1')

@@ -8,8 +8,8 @@ import numpy as np
 import sympy as sp
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ET
-from utils import to_xml_field
-
+from febio_exporter.utils import to_xml_field
+from febio_exporter.loaddata import Loaddata
 
 __doc__ = "Discrete submodule to append discrete elements, such as linear or " \
           "nonlinear springs."
@@ -24,6 +24,7 @@ class Discrete:
     def __init__(self, model):
         self.parent = model
         self.discrete_id = 1
+        self.loaddata = Loaddata(model)
 
     def add_discrete_element(self, group_name,
                              origin_geometry, origin_node_set,
@@ -125,9 +126,13 @@ class Discrete:
                              label=str(ref_strain))
                     plt.legend()
                     plt.show()
-                    self.parent.add_loadcurve(spring_loadcurve_id, 'linear',
-                                              'constant',
-                                              displacement, force)
+                    if self.parent.loaddata is None:
+                        self.parent.loaddata = ET.SubElement(self.parent.root,
+                                                             'LoadData')
+                    self.loaddata.add_loadcurve(spring_loadcurve_id,
+                                                'linear',
+                                                'constant',
+                                                displacement, force)
                     w += 1
         else:
             k = young_mod * area
@@ -166,9 +171,10 @@ class Discrete:
                 force[0] = 0
                 force = np.round(force, 3)
                 # print(strain,stress)
-                self.parent.add_loadcurve(spring_loadcurve_id, 'linear',
-                                          'constant',
-                                          displacement, force)
+                self.loaddata.add_loadcurve(spring_loadcurve_id,
+                                            'linear',
+                                            'constant',
+                                            displacement, force)
                 w += 1
                 displacements.append(displacement)
                 forces.append(force)

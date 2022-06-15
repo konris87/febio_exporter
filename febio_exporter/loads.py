@@ -4,7 +4,7 @@
 # @Email   : krisvas@ece.upatras.gr
 # @File    : loads.py
 import xml.etree.ElementTree as ET
-from utils import to_xml_field
+from febio_exporter.utils import to_xml_field
 
 
 class Loads:

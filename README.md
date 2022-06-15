@@ -2,11 +2,11 @@
 
 # Description
 
-A Python module to export .feb files that represent finite element models that
-are compatible with FEBio Suite.
+A Python module to export .feb files that represent finite element models, 
+compatible with FEBio Suite software.
 
 # Dependencies
-Dependencies can be installed through Poetry, with the provided settings
+numpy, vedo, meshio, xml.etree
 
 # Installation
 Run `python setup.py install`
@@ -15,8 +15,8 @@ Run `python setup.py install`
 The scripts are compatible with Python 3.8. 
 
 # Author and Contributors
-- Author: Dimitar Stanev
-- Contributors: Konstantinos Filip, Konstantinos Risvas
+- Authors: Dimitar Stanev, Konstantinos Risvas
+- Contributors: Konstantinos Filip
 
 # License
 

@@ -5,7 +5,7 @@
 # @Filename:    constraints.py
 import copy
 import xml.etree.ElementTree as ET
-from utils import to_xml_field
+from febio_exporter.utils import to_xml_field
 
 __doc__ = "Constraints submodule to create rigid joints," \
           " rigid connectors and prestrain rules"

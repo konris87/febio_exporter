@@ -14,6 +14,8 @@ setup(name='febio_exporter',
       author='Dimitar Stanev',
       license='GPL v3',
       packages=['febio_exporter'],
-      package_data={'febio_exporter': ['__init__.py',
-                                       'model.py']},
-      include_package_data=True)
+      # package_data={'febio_exporter': ['__init__.py',
+      #                                  'model.py']
+      #               },
+      # include_package_data=True
+      )

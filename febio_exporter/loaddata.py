@@ -5,7 +5,7 @@
 # @Filename:    loaddata.py
 
 import xml.etree.ElementTree as ET
-from utils import to_xml_field
+from febio_exporter.utils import to_xml_field
 
 __doc__ = "LoadData submodule to define load controllers"
 __all__ = ["Loaddata"]
@@ -44,7 +44,8 @@ class Loaddata:
 
         self.root = self.parent.loaddata
 
-        assert (curve_type in ['linear', 'smooth', 'step'])
+        assert (curve_type in ['linear', 'smooth', 'step', 'approximation',
+                               'control points'])
         assert (extend_type in ['constant', 'extrapolate', 'repeat',
                                 'repeat offset'])
         loadcurve = ET.SubElement(self.root, 'load_controller',

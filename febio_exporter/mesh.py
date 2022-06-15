@@ -3,9 +3,8 @@
 # @Author:      kostas
 # @Email:   krisvas@ece.upatras.gr
 # @Filename:    mesh.py
-
 import xml.etree.ElementTree as ET
-from utils import to_xml_field
+from febio_exporter.utils import to_xml_field
 
 __doc__ = "Mesh submodule to create mesh data, nodal coordinates and " \
           "connectivity."

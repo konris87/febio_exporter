@@ -5,7 +5,7 @@
 # @Filename:    material.py
 import copy
 import xml.etree.ElementTree as ET
-from utils import to_xml_field
+from febio_exporter.utils import to_xml_field
 
 __doc__ = "Material submodule to create a new material connectivity. " \
           "FEBio default Material parameters are provided as static functions"
