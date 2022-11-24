@@ -343,7 +343,7 @@ class FEBioExporter:
                 raise RuntimeError('Mesh Type not implemented yet')
 
         # create a colormap for the provided meshes
-        colors = vedo.buildPalette('g', 'r', N=len(meshes) + 1)
+        colors = vedo.build_palette('g', 'r', len(meshes) + 1)
 
         # create a vedo plotter
         plt = vedo.Plotter(title="{}".format(self.name))
