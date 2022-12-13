@@ -11,10 +11,12 @@
 # (e.g. 'x,y,z')
 import copy
 import os
+import febio_exporter
 import xml.etree.ElementTree as ET
 from febio_exporter.utils import export, indent
 import subprocess
 import vedo
+import numpy as np
 
 __doc__ = "Submodule to create, export and edit a .feb model"
 __all__ = ["FEBioExporter"]
@@ -27,10 +29,10 @@ class FEBioExporter:
 
     def __init__(self):
         """Constructor"""
-        self.material_id = 1
+        self.material_id = 0
         self.node_id = 1
         self.element_id = 1
-        self.loadcurve_id = 1
+        self.loadcurve_id = 0
         # self.discrete_id = 1
         self.root = ET.Element('febio_spec',
                                attrib={'version': '3.0'})
@@ -58,11 +60,14 @@ class FEBioExporter:
         # due to bug in FEBio discrete section cannot be empty
         # self.discrete = None
         self.discrete = None
-        # self.constraints = ET.SubElement(self.root, 'Constraints')
+        self.constraints = ET.SubElement(self.root, 'Constraints')
         self.loaddata = None
         self.output = None
         self.step_counter = 1
         self.name = ''
+
+        self.model_rotation = np.eye(3)
+        self.model_origin = np.zeros(3)
 
     # def enable_restart(self, file_name):
     #     """Enables the febio restart mechanism.
@@ -178,13 +183,15 @@ class FEBioExporter:
             last_element_id = int(element.attrib['id'])
 
         # retrieve the last material id in order to append new materials
-        self.material_id = last_element_id + 1
+        self.material_id = last_element_id
 
         # load geometries file
         self.geometries.set('from', geometry_file)
 
         # load the discrete elements file
-        if self.discrete is None:
+        if discrete_file is None:
+            pass
+        elif self.discrete is None:
             self.discrete = ET.SubElement(self.root, 'Discrete')
             self.discrete.set('from', discrete_file)
 
@@ -246,7 +253,7 @@ class FEBioExporter:
                 last_curve_id = int(element.attrib['id'])
 
             # retrieve the last curve id in order to append new curves
-            self.loadcurve_id = last_curve_id + 1
+            self.loadcurve_id = last_curve_id
 
     def add_output(self, plot_file_parameters, logfile_parameters):
         """Sets the output parameters of the analysis.
@@ -410,12 +417,4 @@ class FEBioExporter:
                     'file': None,
                     'ids': None}
             },
-            'node_data': {
-                'displacement': {
-                    'data': 'x;y;z',
-                    'delim': ',',
-                    'file': None,
-                    'ids': None
-                }
-            }
         })

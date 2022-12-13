@@ -430,9 +430,10 @@ def get_elements_within_boundary(mesh, boundary, element_type='triangle'):
 
     element_labels = []
     for k in nodes:
-        element_labels += np.where(mesh.cells[element_type] == k)[0].tolist()
+        element_labels += np.where(mesh.cells_dict[element_type] == k)[
+            0].tolist()
 
-    return mesh.cells[element_type][element_labels]
+    return mesh.cells_dict[element_type][element_labels]
 
 
 def get_element_set(mesh, physical_group_name, element_type):

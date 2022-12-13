@@ -26,12 +26,13 @@ class Discrete:
         self.discrete_id = 1
         self.loaddata = Loaddata(model)
 
-    def add_discrete_element(self, group_name,
-                             origin_geometry, origin_node_set,
-                             origin_node_offset, insertion_geometry,
-                             insertion_node_set, insertion_node_offset, ref_ax,
-                             young_mod, cross_section, ref_strain,
-                             mri_length, offset, linearity, plot_curve=True):
+    def add_discrete_element(
+            self, group_name,
+            origin_geometry, origin_node_set,
+            origin_node_offset, insertion_geometry,
+            insertion_node_set, insertion_node_offset, ref_ax,
+            young_mod, cross_section, ref_strain,
+            mri_length, offset, linearity, plot_curve=True):
         """
 
         Parameters
@@ -87,13 +88,14 @@ class Discrete:
                     # spring constant:
                     spring_constant = stiffness / spring_num
                     # print(spring_constant)
-                    self.add_spring(group_name + str(i) + '_' + str(w),
-                                    int(origin_points[
-                                            i, 0]) + origin_node_offset,
-                                    int(insertion_points[
-                                            i, 0]) + insertion_node_offset,
-                                    spring_constant,
-                                    'tension-only linear spring')
+                    self.add_spring(
+                        group_name + str(i) + '_' + str(w),
+                        int(origin_points[
+                                i, 0]) + origin_node_offset,
+                        int(insertion_points[
+                                i, 0]) + insertion_node_offset,
+                        spring_constant,
+                        'tension-only linear spring')
                     w += 1
 
                 average_length = np.average(np.asarray(total_length))
@@ -127,12 +129,13 @@ class Discrete:
                     plt.legend()
                     plt.show()
                     if self.parent.loaddata is None:
-                        self.parent.loaddata = ET.SubElement(self.parent.root,
-                                                             'LoadData')
-                    self.loaddata.add_loadcurve(spring_loadcurve_id,
-                                                'linear',
-                                                'constant',
-                                                displacement, force)
+                        self.parent.loaddata = ET.SubElement(
+                            self.parent.root, 'LoadData')
+                    self.loaddata.add_loadcurve(
+                        spring_loadcurve_id,
+                        'linear',
+                        'constant',
+                        displacement, force)
                     w += 1
         else:
             k = young_mod * area
@@ -171,10 +174,11 @@ class Discrete:
                 force[0] = 0
                 force = np.round(force, 3)
                 # print(strain,stress)
-                self.loaddata.add_loadcurve(spring_loadcurve_id,
-                                            'linear',
-                                            'constant',
-                                            displacement, force)
+                self.loaddata.add_loadcurve(
+                    spring_loadcurve_id,
+                    'linear',
+                    'constant',
+                    displacement, force)
                 w += 1
                 displacements.append(displacement)
                 forces.append(force)
@@ -222,13 +226,17 @@ class Discrete:
         discrete_element = ET.SubElement(discrete_set, 'delem')
         discrete_element.text = to_xml_field([node_a, node_b])
 
-        discrete_material = ET.SubElement(self.parent.discrete,
-                                          'discrete_material',
-                                          attrib={'id': str(self.discrete_id),
-                                                  'name': name,
-                                                  'type': 'nonlinear spring'})
-        force_elem = ET.SubElement(discrete_material, 'force',
-                                   attrib={'lc': str(self.parent.loadcurve_id)})
+        discrete_material = ET.SubElement(
+            self.parent.discrete,
+            'discrete_material',
+            attrib={'id': str(self.discrete_id),
+                    'name': name,
+                    'type': 'nonlinear spring'})
+
+        force_elem = ET.SubElement(
+            discrete_material,
+            'force',
+            attrib={'lc': str(self.parent.loadcurve_id + 1)})
         force_elem.text = str(scale_factor)
         self.parent.loadcurve_id = self.parent.loadcurve_id + 1
 
@@ -236,7 +244,7 @@ class Discrete:
                       attrib={'dmat': str(self.discrete_id),
                               'discrete_set': name})
         self.discrete_id += 1
-        return self.parent.loadcurve_id - 1
+        return self.parent.loadcurve_id
 
     def add_menisci_springs(self, group_name, origin_geometry,
                             origin_node_set,
@@ -267,8 +275,8 @@ class Discrete:
         for i, origin_node in enumerate(origin_node_set):
             origin_position = origin_geometry.points[origin_node, :]
             for j, insertion_node in enumerate(insertion_node_set):
-                insertion_position = insertion_geometry.points[
-                                     insertion_node, :]
+                # insertion_position = insertion_geometry.points[
+                #                      insertion_node, :]
 
                 # L = np.linalg.norm(origin_position - insertion_position)
                 spring_constant = round(constant / spring_number, 2)

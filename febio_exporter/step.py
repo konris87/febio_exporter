@@ -61,7 +61,7 @@ class Step:
             if not restart_step:
                 self.root = ET.SubElement(
                     self.step, 'step',
-                    attrib={'id': str(self.parent.loadcurve_id),
+                    attrib={'id': str(self.parent.loadcurve_id + 1),
                             'name': name})
             else:
                 #  TODO implement restart step
@@ -83,9 +83,9 @@ class Step:
                     if use_must_point and sub_key == 'dtmax':
                         item = ET.SubElement(
                             time_stepper, sub_key,
-                            attrib={'lc': str(self.parent.loadcurve_id)})
+                            attrib={'lc': str(self.parent.loadcurve_id + 1)})
                         # item.text = ''
-                        self.loadcurve_id = self.parent.loadcurve_id
+                        self.loadcurve_id = self.parent.loadcurve_id + 1
                         self.parent.loadcurve_id += 1
                     else:
                         item = ET.SubElement(time_stepper, sub_key)

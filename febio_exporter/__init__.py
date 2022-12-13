@@ -20,7 +20,9 @@ from febio_exporter.loaddata import *
 from febio_exporter.loads import *
 from febio_exporter.material import *
 from febio_exporter.mesh import *
+from febio_exporter.meshdata import *
 from febio_exporter.model import *
 from febio_exporter.rigid import *
 from febio_exporter.step import *
 from febio_exporter.utils import *
+from febio_exporter.initial import *

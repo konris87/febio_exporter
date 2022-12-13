@@ -181,6 +181,33 @@ class Mesh:
             ET.SubElement(node_set_element, 'node',
                           attrib={'id': str(n + node_offset)})
 
+    def add_element_set(self, name, element_set, element_offset, root=None):
+        """Adds an element set.
+
+        Parameters
+        ----------
+
+        name: [string] name of the element
+
+        element_set: [list] element id values
+
+        element_offset: [integer] the id of the first node that belongs to this
+                     element (since may contain many geometries)
+
+        root: [xml SubElement, None] if none they are appended to Geometry
+
+        """
+        if root is None:
+            self.root = self.parent.geometries
+        else:
+            self.root = root
+
+        element_set_element = ET.SubElement(self.root, 'ElementSet',
+                                            attrib={'name': name})
+        for n in element_set.flatten():
+            ET.SubElement(element_set_element, 'e',
+                          attrib={'id': str(n + element_offset)})
+
     def add_domain(self, name, material_name, domain, root=None):
         """
         Adds a shell domain entry

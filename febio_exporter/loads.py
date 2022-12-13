@@ -45,8 +45,9 @@ class Loads:
                                              'surface': surface_name})
 
         if parameters['type'] == 'pressure':
-            scale = ET.SubElement(load_element, 'pressure',
-                                  attrib={'lc': str(self.parent.loadcurve_id)})
+            scale = ET.SubElement(
+                load_element, 'pressure',
+                attrib={'lc': str(self.parent.loadcurve_id + 1)})
             scale.text = str(scale_factor)
             linear = ET.SubElement(load_element, 'linear')
             linear.text = str(parameters['linear'])
@@ -54,14 +55,15 @@ class Loads:
             stiffness.text = str(parameters['stiffness'])
 
         elif parameters['type'] == 'traction':
-            scale = ET.SubElement(load_element, 'scale',
-                                  attrib={'lc': str(self.parent.loadcurve_id)})
+            scale = ET.SubElement(
+                load_element, 'scale',
+                attrib={'lc': str(self.parent.loadcurve_id + 1)})
             scale.text = str(scale_factor)
             traction = ET.SubElement(load_element, 'traction')
             traction.text = to_xml_field(parameters['traction'])
 
-        self.parent.loadcurve_id = self.parent.loadcurve_id + 1
-        return self.parent.loadcurve_id - 1
+        self.parent.loadcurve_id += 1
+        return self.parent.loadcurve_id
 
     def add_nodal_load(self, name, dof, node_set_name, scale_factor):
         """Adds a nodal load.

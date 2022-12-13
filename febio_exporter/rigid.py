@@ -94,7 +94,7 @@ class Rigid:
                 if loadcurve:
                     subel = ET.SubElement(prescribed_element, 'value',
                                           attrib={'lc': str(
-                                              self.parent.loadcurve_id)})
+                                              self.parent.loadcurve_id + 1)})
                     subel.text = value
                     self.parent.loadcurve_id = self.parent.loadcurve_id + 1
                 else:
@@ -106,7 +106,7 @@ class Rigid:
                 subel = ET.SubElement(prescribed_element, key)
                 subel.text = value
 
-        return self.parent.loadcurve_id - 1
+        return self.parent.loadcurve_id
 
     #  TODO add description about paramters
     @staticmethod
