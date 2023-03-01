@@ -485,3 +485,29 @@ def sort_children(parent, attr):
 
     """
     parent[:] = sorted(parent, key=lambda child: int(child.get(attr)))
+
+
+def sort_sets(mesh, node_set, ax):
+    """
+    Sort the node_sets based on the specified coordinate
+
+    Parameters
+    ------------
+    mesh: geometry
+
+    node_set: a list of selected nodes
+
+    ax: defines the sorting coordinate axis
+
+    Returns
+    ------------
+    array1: a numpy array with the node ids sorted by the desired axis.
+
+    """
+    node_list = []
+    for i in node_set:
+        node_list.append(mesh.points[i])
+    coords = np.array(node_list)
+    array = np.insert(coords, 0, node_set, axis=1)
+    array1 = array[np.argsort(array[:, ax])]
+    return array1

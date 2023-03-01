@@ -26,3 +26,4 @@ from febio_exporter.rigid import *
 from febio_exporter.step import *
 from febio_exporter.utils import *
 from febio_exporter.initial import *
+from febio_exporter.restart import *

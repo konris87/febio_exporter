@@ -9,22 +9,22 @@
 # Preview bug #2, deformable fix constraint ignores name
 # Preview bug #3, deformable fix constraint requires , without space
 # (e.g. 'x,y,z')
-import copy
+
 import os
-import febio_exporter
 import copy
 import xml.etree.ElementTree as ET
-from febio_exporter.utils import export, indent, sort_children
+from xml.dom import minidom
+from febio_exporter_4.utils import export, indent, sort_children
 import subprocess
 import vedo
 import numpy as np
 
 __doc__ = "Submodule to create, export and edit a .feb model"
-__all__ = ["FEBioExporter"]
+__all__ = ["FEBioExporter4"]
 
 
 ###############################################################################
-class FEBioExporter:
+class FEBioExporter4:
     """This class creates, edits and exports the defined model as .feb file
     format."""
 
@@ -36,7 +36,7 @@ class FEBioExporter:
         self.loadcurve_id = 0
         # self.discrete_id = 1
         self.root = ET.Element('febio_spec',
-                               attrib={'version': '3.0'})
+                               attrib={'version': '4.0'})
         self.solid = ET.SubElement(self.root, 'Module',
                                    attrib={'type': 'solid'})
         self.control = None
@@ -101,12 +101,17 @@ class FEBioExporter:
             file_name += '.feb'
 
         # export section into separate file
-        # old_section = section.copy() # Python 2.7
         old_section = copy.copy(section)
         root = ET.Element('febio_spec',
-                          attrib={'version': '3.0'})
+                          attrib={'version': '4.0'})
         root.append(old_section)
-        export(root, os.path.join(dir_name, file_name))
+        tree = ET.ElementTree(root)
+        ET.indent(tree, space="\t", level=0)
+
+        tree.write(os.path.join(dir_name, file_name),
+                   encoding="utf-8", xml_declaration=True,
+                   short_empty_elements=True)
+
         # clear current section
         section.clear()
         section.attrib = {'from': file_name}
@@ -132,22 +137,23 @@ class FEBioExporter:
             print("created folder : ", dir_name)
         else:
             print("output_dir exists")
-        # xmlstr = minidom.parseString(ET.tostring(root)).toprettyxml(indent='
-        # ')
-        indent(self.root)
+
         tree = ET.ElementTree(self.root)
+        # ensure that the loaddata curves are sorted
+        try:
+            loaddata = tree.find("LoadData")
+            sort_children(loaddata, 'id')
+        except TypeError:
+            pass
 
-        # ensure that the loaddata are sorted
-        loaddata = tree.find("LoadData")
-        sort_children(loaddata, 'id')
-
-        # with open(file_path, 'wb') as f:  # Python 3 : 'wb', not 'w'
-        #     # f.write(xmlstr.encode("utf-8"))
-        #     f.write(ET.tostring(root, xml_declaration='xml',
-        #                         short_empty_elements=False))
+        # xmlstr = minidom.parseString(ET.tostring(self.root)).toprettyxml(
+        #     indent='    ')
+        # with open(file, "w") as f:
+        #     f.write(xmlstr)
+        ET.indent(tree, space="\t", level=0)
         tree.write(file,
                    encoding="utf-8", xml_declaration=True,
-                   short_empty_elements=False)
+                   short_empty_elements=True)
 
     def edit_feb_file(self, feb_file, geometry_file, discrete_file):
         """
@@ -324,7 +330,7 @@ class FEBioExporter:
         -------
 
         """
-        command = ["febio3", f"-{mode}", '{}'.format(model_filename)]
+        command = ["febio4", f"-{mode}", '{}'.format(model_filename)]
         command += args
         print(command)
         subprocess.run(command,	cwd=directory)

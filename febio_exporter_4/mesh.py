@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 
 import numpy as np
 
-from febio_exporter.utils import to_xml_field
+from febio_exporter_4.utils import to_xml_field
 
 __doc__ = "Mesh submodule to create mesh data, nodal coordinates and " \
           "connectivity."
@@ -180,9 +180,18 @@ class Mesh:
 
         node_set_element = ET.SubElement(self.root, 'NodeSet',
                                          attrib={'name': name})
-        for n in node_set.flatten():
-            ET.SubElement(node_set_element, 'node',
-                          attrib={'id': str(n + node_offset)})
+
+        node_set_test = node_set.flatten() + node_offset
+
+        slices = int(node_set_test.shape[0] / 8)
+
+        split_node_set = np.array_split(
+            node_set_test, slices
+        )
+        node_set_element.text = ""
+        for s in split_node_set:
+            node_set_element.text += "\n{}{},".format(3*"\t", to_xml_field(s))
+        node_set_element.text += '\n' + 2*"\t"
 
     def add_element_set(self, name, element_set, element_offset, root=None):
         """Adds an element set.
@@ -211,7 +220,8 @@ class Mesh:
             ET.SubElement(element_set_element, 'e',
                           attrib={'id': str(n + element_offset)})
 
-    def add_domain(self, name, material_name, domain, root=None):
+    def add_domain(self, name, material_name, domain, shell_type='rigid-shell',
+                   root=None):
         """
         Adds a shell domain entry
 
@@ -220,19 +230,32 @@ class Mesh:
         name
         material_name
         domain
+        shell_type
         root
 
         Returns
         -------
 
         """
-        domain_el = ET.SubElement(
-            self.parent.domains, "{}Domain".format(domain),
-            attrib={'name': '{}_elements'.format(name),
-                    'mat': material_name})
         if domain == 'Shell':
+            domain_el = ET.SubElement(
+                self.parent.domains, "{}Domain".format(domain),
+                attrib={
+                    'name': '{}_elements'.format(name),
+                    'mat': material_name,
+                    'type': 'rigid-shell'
+                }
+            )
+            shell_thick_el = ET.SubElement(domain_el, 'shell_thickness')
+            shell_thick_el.text = str(0)
             shell_el = ET.SubElement(domain_el, 'shell_normal_nodal')
             shell_el.text = '1'
+
+        else:
+            domain_el = ET.SubElement(
+                self.parent.domains, "{}Domain".format(domain),
+                attrib={'name': '{}_elements'.format(name),
+                        'mat': material_name})
 
     def add_element(self, name, material_id, element_type, elements,
                     node_offset, root=None):
@@ -268,7 +291,7 @@ class Mesh:
 
         elements_element = ET.SubElement(self.root, 'Elements',
                                          attrib={'type': element_type,
-                                                 'mat': str(material_id),
+                                                 # 'mat': str(material_id),
                                                  'name': name})
 
         elements = elements + node_offset

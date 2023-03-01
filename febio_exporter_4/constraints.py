@@ -5,7 +5,7 @@
 # @Filename:    constraints.py
 import copy
 import xml.etree.ElementTree as ET
-from febio_exporter.utils import to_xml_field
+from febio_exporter_4.utils import to_xml_field
 
 __doc__ = "Constraints submodule to create rigid joints," \
 		  " rigid connectors and prestrain rules"
@@ -305,6 +305,7 @@ class Constraints:
 			'type': "in-situ stretch",
 			'tolerance': 0.01,
 			'min_iters': 3,
-			'max_iters': 0.0
+			'max_iters': 0.0,
+			'isochoric': 1.0
 		})
 

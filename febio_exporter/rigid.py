@@ -108,6 +108,37 @@ class Rigid:
 
         return self.parent.loadcurve_id
 
+    def add_rigid_contractile_force(self, name, parameters, root=None):
+
+        if root is None:
+            self.root = self.parent.rigid
+        else:
+            self.root = root
+
+        constraint = ET.SubElement(
+            self.root, "rigid_connector", attrib={
+                "type": "rigid contractile force"
+            })
+
+        for key, value in parameters.items():
+            if "body" in key:
+                subel = ET.SubElement(
+                    constraint, key)
+                subel.text = str(value)
+            elif "insertion" in key:
+                subel = ET.SubElement(
+                    constraint, key)
+                subel.text = to_xml_field(value)
+            elif "f0" in key:
+                subel = ET.SubElement(
+                    constraint, key,
+                    attrib={"lc": str(self.parent.loadcurve_id + 1)}
+                )
+                subel.text = str(value)
+                self.parent.loadcurve_id += 1
+
+        return self.parent.loadcurve_id
+
     #  TODO add description about paramters
     @staticmethod
     def get_rigid_body_prescribed_motion_default_parameters():
@@ -133,3 +164,20 @@ class Rigid:
                           "scale": str(1),
                           "constraint_type": "force",
                           "load_type": str(0)})
+
+    @staticmethod
+    def get_default_rcf_parameters():
+        """
+		default rigid contractile force parameters
+
+		Returns
+		-------
+		a copy of the parameters as dictionary
+		"""
+        return copy.copy({
+            "body_a": 1,
+            "body_b": 2,
+            "insertion_a": [0, 0, 0],
+            "insertion_b": [0, 0, 0],
+            "f0": 1
+        })

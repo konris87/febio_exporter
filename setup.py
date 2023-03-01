@@ -13,7 +13,7 @@ setup(name='febio_exporter',
       description='create .feb models for FEBio suite',
       author='Dimitar Stanev',
       license='GPL v3',
-      packages=['febio_exporter'],
+      packages=['febio_exporter', 'febio_exporter_4'],
       # package_data={'febio_exporter': ['__init__.py',
       #                                  'model.py']
       #               },

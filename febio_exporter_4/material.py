@@ -5,7 +5,7 @@
 # @Filename:    material.py
 import copy
 import xml.etree.ElementTree as ET
-from febio_exporter.utils import to_xml_field
+from febio_exporter_4.utils import to_xml_field
 
 __doc__ = "Material submodule to create a new material connectivity. " \
 		  "FEBio default Material parameters are provided as static functions"
@@ -553,92 +553,88 @@ class Material:
 
 			return self.parent.loadcurve_id
 
-
-def recursive_dict_operator(self, d, parent):
-	# iterate over all items of the dictionary
-	for key, value in d.items():
-		# check if the value is itself a dictionary
-		if isinstance(value, dict):
-			# if yes then create an element with attribute "type" = key
-			if key in ["stretch"]:
-				sub_elem = ET.SubElement(
-					parent, key, attrib={"type": key}
-				)
-				print("HERE")
-				sub_elem.text = str(value)
+	def recursive_dict_operator(self, d, parent):
+		# iterate over all items of the dictionary
+		for key, value in d.items():
+			# check if the value is itself a dictionary
+			if isinstance(value, dict):
+				# if yes then create an element with attribute "type" = key
+				if key in ["stretch"]:
+					sub_elem = ET.SubElement(
+						parent, key, attrib={"type": key}
+					)
+					print("HERE")
+					sub_elem.text = str(value)
+				else:
+					sub_elem = ET.SubElement(
+						parent, key, attrib={"type": value["type"]}
+					)
+					value.pop("type")
+					for pair in self.recursive_dict_operator(value, sub_elem):
+						sub_sub_elem = ET.SubElement(sub_elem, *pair)
+						sub_sub_elem.text = to_xml_field(value)
+						yield key, *pair
+			# if the value is not a dictionary then yield its value
 			else:
-				sub_elem = ET.SubElement(
-					parent, key, attrib={"type": value["type"]}
-				)
-				value.pop("type")
-				for pair in self.recursive_dict_operator(value, sub_elem):
-					sub_sub_elem = ET.SubElement(sub_elem, *pair)
-					sub_sub_elem.text = to_xml_field(value)
-					yield key, *pair
-		# if the value is not a dictionary then yield its value
-		else:
-			elem = ET.SubElement(parent, key)
-			elem.text = to_xml_field(value)
+				elem = ET.SubElement(parent, key)
+				elem.text = to_xml_field(value)
 
+	@staticmethod
+	def get_default_fung_orthotropic_parameters():
+		"""Gets the Fung orthotroptic meniscus materials parameters.
 
-@staticmethod
-def get_default_fung_orthotropic_parameters():
-	"""Gets the Fung orthotroptic meniscus materials parameters.
+		Returns
+		-------
 
-	Returns
-	-------
+		parameters: [dictionary]
 
-	parameters: [dictionary]
+		"""
+		return copy.copy({
+			'type': 'Fung orthotropic',
+			'density': 0,
+			'E1': 0,
+			'E2': 0,
+			'E3': 0,
+			'G12': 0,
+			'G23': 0,
+			'G31': 0,
+			'v12': 0,
+			'v23': 0,
+			'v31': 0,
+			'c': 0,
+			'k': 0
+		})
 
-	"""
-	return copy.copy({
-		'type': 'Fung orthotropic',
-		'density': 0,
-		'E1': 0,
-		'E2': 0,
-		'E3': 0,
-		'G12': 0,
-		'G23': 0,
-		'G31': 0,
-		'v12': 0,
-		'v23': 0,
-		'v31': 0,
-		'c': 0,
-		'k': 0
-	})
+	@staticmethod
+	def get_default_mooney_rivlin_parameters():
+		"""Gets the default Mooney-Rivlin materials parameters.
 
+		Returns
+		-------
 
-@staticmethod
-def get_default_mooney_rivlin_parameters():
-	"""Gets the default Mooney-Rivlin materials parameters.
+		parameters: [dictionary]
 
-	Returns
-	-------
+		"""
+		return copy.copy({
+			'type': 'Mooney-Rivlin',
+			'density': 0,
+			'c1': 0,
+			'c2': 0,
+			'k': 0
+		})
 
-	parameters: [dictionary]
+	@staticmethod
+	def get_default_rigid_body_parameters():
+		"""Gets default rigid-body materials parameters.
 
-	"""
-	return copy.copy({
-		'type': 'Mooney-Rivlin',
-		'density': 0,
-		'c1': 0,
-		'c2': 0,
-		'k': 0
-	})
+		Returns
+		-------
 
+		parameters: [dictionary]
 
-@staticmethod
-def get_default_rigid_body_parameters():
-	"""Gets default rigid-body materials parameters.
-
-	Returns
-	-------
-
-	parameters: [dictionary]
-
-	"""
-	return copy.copy({
-		'type': 'rigid body',
-		'density': 0,
-		'center_of_mass': [0, 0, 0]
-	})
+		"""
+		return copy.copy({
+			'type': 'rigid body',
+			'density': 0,
+			'center_of_mass': [0, 0, 0]
+		})
