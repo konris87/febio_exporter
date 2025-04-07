@@ -291,6 +291,7 @@ class Rigid:
 		loadcurves = []
 		for key, value in parameters.items():
 			if key == "type":
+				print("passing")
 				pass
 			elif key in ['translation', 'force']:
 				if value == 0:

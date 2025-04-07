@@ -4,7 +4,7 @@
 # @Email   : krisvas@ece.upatras.gr
 # @File    : loads.py
 import xml.etree.ElementTree as ET
-from febio_exporter_4.utils import to_xml_field
+from febio_exporter.utils import to_xml_field
 
 
 class Loads:
@@ -13,6 +13,7 @@ class Loads:
     """
 
     def __init__(self, model):
+        # self.add_loadcurve = febio_exporter.FEBioExporter.add_loadcurve
         self.parent = model
 
     def add_surface_load(self, name, parameters, surface_name, scale_factor,
@@ -61,18 +62,10 @@ class Loads:
             traction = ET.SubElement(load_element, 'traction')
             traction.text = to_xml_field(parameters['traction'])
 
-        elif parameters['type'] == 'force':
-            scale = ET.SubElement(
-                load_element, 'scale',
-                attrib={'lc': str(self.parent.loadcurve_id + 1)})
-            scale.text = str(scale_factor)
-            traction = ET.SubElement(load_element, 'force')
-            traction.text = to_xml_field(parameters['force'])
-
         self.parent.loadcurve_id += 1
         return self.parent.loadcurve_id
 
-    def add_nodal_load(self, name, relative, dof, node_set_name, scale_factor):
+    def add_nodal_load(self, name, dof, node_set_name, scale_factor):
         """Adds a nodal load.
 
         Parameters
@@ -93,45 +86,12 @@ class Loads:
 
         """
         assert (dof in ['x', 'y', 'z'])
-        assert (relative in [0, 1])
-        load_element = ET.SubElement(
-            self.parent.loads,
-            'nodal_load',
-            attrib={'name': name,
-                    'type': "nodal_load",
-                    'node_set': node_set_name})
-        
-        relativeEl = ET.SubElement(load_element, "relative")
-        relativeEl.text = str(relative)
-        
-        dofEl = ET.SubElement(load_element, 'dof')
-        dofEl.text = dof
-
-        scale = ET.SubElement(
-            load_element, 'scale',
-            attrib={'lc': str(self.parent.loadcurve_id + 1)})
+        load_element = ET.SubElement(self.parent.loads, 'nodal_load',
+                                     attrib={'name': name,
+                                             'bc': dof,
+                                             'node_set': node_set_name})
+        scale = ET.SubElement(load_element, 'scale',
+                              attrib={'lc': str(self.parent.loadcurve_id)})
         scale.text = str(scale_factor)
-        
-        self.parent.loadcurve_id += 1
-        return self.parent.loadcurve_id
-    
-
-    def add_nodal_force(self, name, node_set_name, vector):
-    
-        load_element = ET.SubElement(
-            self.parent.loads,
-            'nodal_load',
-            attrib={
-                'name': name,
-                'type': "nodal_force",
-                'node_set': node_set_name})
-    
-        valueEl = ET.SubElement(
-            load_element, 'value',
-            attrib={'lc': str(self.parent.loadcurve_id + 1)}
-        )
-        valueEl.text = to_xml_field(vector)
-
-        self.parent.loadcurve_id += 1
-        return self.parent.loadcurve_id
-    
+        self.parent.loadcurve_id = self.parent.loadcurve_id + 1
+        return self.parent.loadcurve_id - 1

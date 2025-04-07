@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: febio_exporter
+Version: 1.0.0
+Summary: create .feb models for FEBio suite
+Author: Dimitar Stanev
+License: GPL v3
+License-File: LICENSE

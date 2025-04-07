@@ -183,6 +183,7 @@ class Boundary:
 	def add_zero_rotation(self, name, node_set, dofs, root=None):
 
 		for _ in dofs:
+			print("dof: ", _)
 			if _ not in ['u', 'v', 'w']:
 				raise RuntimeError("Wrong type of dof")
 
