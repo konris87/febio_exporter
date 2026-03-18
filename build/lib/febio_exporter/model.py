@@ -9,26 +9,26 @@
 # Preview bug #2, deformable fix constraint ignores name
 # Preview bug #3, deformable fix constraint requires , without space
 # (e.g. 'x,y,z')
-
+import copy
 import os
+import febio_exporter
 import copy
 import xml.etree.ElementTree as ET
-from xml.dom import minidom
-from febio_exporter_4.utils import export, indent, sort_children
+from febio_exporter.utils import export, indent, sort_children
 import subprocess
 import vedo
 import numpy as np
 
 __doc__ = "Submodule to create, export and edit a .feb model"
-__all__ = ["FEBioExporter4"]
+__all__ = ["FEBioExporter"]
 
 
 ###############################################################################
-class FEBioExporter4:
+class FEBioExporter:
     """This class creates, edits and exports the defined model as .feb file
     format."""
 
-    def __init__(self, module=None):
+    def __init__(self):
         """Constructor"""
         self.material_id = 0
         self.node_id = 1
@@ -36,17 +36,9 @@ class FEBioExporter4:
         self.loadcurve_id = 0
         # self.discrete_id = 1
         self.root = ET.Element('febio_spec',
-                               attrib={'version': '4.0'})
-        if module is None:
-            module = {"type": "solid"}
-        self.module = ET.SubElement(
-            self.root, 'Module',
-            attrib={'type': module['type']})
-        
-        if "units" in module.keys():
-            unitsEl = ET.SubElement(self.module, "units")
-            unitsEl.text = module["units"]
-
+                               attrib={'version': '3.0'})
+        self.solid = ET.SubElement(self.root, 'Module',
+                                   attrib={'type': 'solid'})
         self.control = None
         self.globals = ET.SubElement(self.root, 'Globals')
         constants = ET.SubElement(self.globals, 'Constants')
@@ -65,10 +57,12 @@ class FEBioExporter4:
         self.rigid = ET.SubElement(self.root, 'Rigid')
         self.loads = ET.SubElement(self.root, 'Loads')
         self.contact = ET.SubElement(self.root, 'Contact')
+        self.step = None
+        # due to bug in FEBio discrete section cannot be empty
+        # self.discrete = None
         self.discrete = None
         self.constraints = ET.SubElement(self.root, 'Constraints')
-        self.loaddata = ET.SubElement(self.root, 'LoadData')
-        self.step = None
+        self.loaddata = None
         self.output = None
         self.step_counter = 1
         self.name = ''
@@ -107,20 +101,16 @@ class FEBioExporter4:
             file_name += '.feb'
 
         # export section into separate file
+        # old_section = section.copy() # Python 2.7
         old_section = copy.copy(section)
         root = ET.Element('febio_spec',
-                          attrib={'version': '4.0'})
+                          attrib={'version': '3.0'})
         root.append(old_section)
-        tree = ET.ElementTree(root)
-        ET.indent(tree, space="\t", level=0)
-
-        tree.write(os.path.join(dir_name, file_name),
-                   encoding="utf-8", xml_declaration=True,
-                   short_empty_elements=True)
+        export(root, os.path.join(dir_name, file_name))
         # clear current section
         section.clear()
-        section.set('from', file_name)
-    
+        section.attrib = {'from': file_name}
+
     def export(self, dir_name, file_name):
         """Exports model as .feb file.
 
@@ -142,199 +132,138 @@ class FEBioExporter4:
             print("created folder : ", dir_name)
         else:
             print("output_dir exists")
-
+        # xmlstr = minidom.parseString(ET.tostring(root)).toprettyxml(indent='
+        # ')
+        indent(self.root)
         tree = ET.ElementTree(self.root)
 
-        # ensure that the loaddata curves are sorted
-        try:
-            loaddata = tree.find("LoadData")
-            sort_children(loaddata, 'id')
-        except TypeError:
-            pass
+        # ensure that the loaddata are sorted
+        loaddata = tree.find("LoadData")
+        sort_children(loaddata, 'id')
 
-        # xmlstr = minidom.parseString(ET.tostring(self.root)).toprettyxml(
-        #     indent='    ')
-        # with open(file, "w") as f:
-        #     f.write(xmlstr)
-        ET.indent(tree, space="\t", level=0)
+        # with open(file_path, 'wb') as f:  # Python 3 : 'wb', not 'w'
+        #     # f.write(xmlstr.encode("utf-8"))
+        #     f.write(ET.tostring(root, xml_declaration='xml',
+        #                         short_empty_elements=False))
         tree.write(file,
                    encoding="utf-8", xml_declaration=True,
-                   short_empty_elements=True)
-        
-    def edit_feb_file(self, febFile, geomFile, discreteFile):
+                   short_empty_elements=False)
 
-        # parse model and update
-        root = ET.parse(febFile).getroot()
+    def edit_feb_file(self, feb_file, geometry_file, discrete_file):
+        """
+        Function that loads a feb file, and adjust the FEBioExporter class in
+        order to continue processing of the feb file.
 
-        # tags to update
-        tags = {
-            "Module": self.module,
-            "MeshDomains": self.domains,
-            "MeshData": self.mesh_data,
-            "Initial": self.initial,
-            "Boundary": self.boundaries,
-            "Rigid": self.rigid,
-            "Contact": self.contact,
-            "Loads": self.loads
-        }
+        Parameters
+        ----------
+        feb_file: the imported feb file
+        geometry_file: the file that contains the geometries
+        discrete_file: the file that contains the discrete element
 
-        for tag, attr in tags.items():
+        """
 
-            elem = root.find(tag)
-            if elem is not None:
-                for child in elem:
-                    attr.append(child)
+        tree = ET.parse(feb_file)
+        root = tree.getroot()
 
-        materialEl = root.find("Material")
-        self.material_id = 0
-        if materialEl is not None:
-            for elem in materialEl:
-                self.materials.append(elem)
-                self.material_id = int(elem.attrib.get("id", 0))
+        childs = []
+        for child in root:
+            childs.append(child)
 
-        geometryRoot = ET.parse(geomFile).getroot()
-        # model.geometries = geometryRoot.find("Mesh")
-        meshEl = geometryRoot.find("Mesh")
-        if meshEl is not None:
-            for elem in meshEl:
-                self.geometries.append(elem)
+        tags = []
+        for child in root:
+            tags.append(child.tag)
 
-        # get the last loadcurve id
-        self.loadcurve_id = 0
-        loaddataEl = root.find("LoadData")
-        if loaddataEl is not None:
-            for elem in loaddataEl:
-                self.loaddata.append(elem)
-                self.loadcurve_id = int(elem.attrib.get("id", 0))
+        # read and copy the material elements
+        last_element_id = None
+        for elem in root[tags.index('Material')]:
+            element = ET.SubElement(self.materials, elem.tag, elem.attrib)
+            for subelem in elem:
+                subelement = ET.SubElement(element, subelem.tag,
+                subelem.attrib)
+                subelement.text = subelem.text
+                for sub in subelem:
+                    subsubelement = ET.SubElement(subelement,
+                                                  sub.tag, sub.attrib)
+                    subsubelement.text = sub.text
+            last_element_id = int(element.attrib['id'])
+            element = copy.deepcopy(elem)
 
-        stepEl = root.findall("Step")
-        if stepEl:
-            # model.step = ET.SubElement(model.root, "Step")
-            for elem in stepEl:
-                self.root.append(elem)
+        # retrieve the last material id in order to append new materials
+        self.material_id = last_element_id
 
-    # def edit_feb_file(self, feb_file, geometry_file, discrete_file):
-    #     """
-    #     Function that loads a feb file, and adjust the FEBioExporter class in
-    #     order to continue processing of the feb file.
+        # load geometries file
+        self.geometries.set('from', geometry_file)
 
-    #     Parameters
-    #     ----------
-    #     feb_file: the imported feb file
-    #     geometry_file: the file that contains the geometries
-    #     discrete_file: the file that contains the discrete element
+        # load the discrete elements file
+        if discrete_file is None:
+            pass
+        elif self.discrete is None:
+            self.discrete = ET.SubElement(self.root, 'Discrete')
+            self.discrete.set('from', discrete_file)
 
-    #     """
+        # read and copy meshdomains
+        for elem in root[tags.index('MeshDomains')]:
+            element = ET.SubElement(self.domains, elem.tag, elem.attrib)
+            for subelem in elem:
+                subelement = ET.SubElement(element, subelem.tag,
+                                           subelem.attrib)
+                subelement.text = subelem.text
 
-    #     tree = ET.parse(feb_file)
-    #     root = tree.getroot()
+        # read and copy meshdata
+        for elem in root[tags.index('MeshData')]:
+            element = ET.SubElement(self.mesh_data, elem.tag, elem.attrib)
+            for subelem in elem:
+                subelement = ET.SubElement(element, subelem.tag,
+                                           subelem.attrib)
+                subelement.text = subelem.text
 
-    #     childs = []
-    #     for child in root:
-    #         childs.append(child)
+        # read and copy the boundary elements
+        for elem in root[tags.index('Boundary')]:
+            element = ET.SubElement(self.boundaries, elem.tag, elem.attrib)
+            for subelem in elem:
+                subelement = ET.SubElement(element, subelem.tag)
+                subelement.text = subelem.text
 
-    #     tags = []
-    #     for child in root:
-    #         tags.append(child.tag)
+        # read and copy rigid
+        for elem in root[tags.index('Rigid')]:
+            element = ET.SubElement(self.rigid, elem.tag, elem.attrib)
+            for subelem in elem:
+                subelement = ET.SubElement(element, subelem.tag,
+                                           subelem.attrib)
+                subelement.text = subelem.text
 
-    #     # update module
-    #     # for elem in root[tags.index('Module')]:
+        # read and copy the contact elements
+        for elem in root[tags.index('Contact')]:
+            element = ET.SubElement(self.contact, elem.tag, elem.attrib)
+            for subelem in elem:
+                subelement = ET.SubElement(element, subelem.tag,
+                                           subelem.attrib)
+                subelement.text = subelem.text
 
-    #     # read and copy the material elements
-    #     last_element_id = None
-    #     for elem in root[tags.index('Material')]:
-    #         element = ET.SubElement(self.materials, elem.tag, elem.attrib)
-    #         for subelem in elem:
-    #             subelement = ET.SubElement(element, subelem.tag,
-    #             subelem.attrib)
-    #             subelement.text = subelem.text
-    #             for sub in subelem:
-    #                 subsubelement = ET.SubElement(subelement,
-    #                                               sub.tag, sub.attrib)
-    #                 subsubelement.text = sub.text
-    #         last_element_id = int(element.attrib['id'])
-    #         element = copy.deepcopy(elem)
+        # load the looadcurves and retrieve the last curve
+        if self.loaddata is None:
+            self.loaddata = ET.SubElement(self.root, 'LoadData')
 
-    #     # retrieve the last material id in order to append new materials
-    #     self.material_id = last_element_id
+        last_curve_id = None
+        if 'LoadData' in tags:
+            for elem in root[tags.index('LoadData')]:
+                element = ET.SubElement(self.loaddata, elem.tag, elem.attrib)
+                if element.attrib['id'] != '0':
+                    self.loadcurve_id = int(
+                        element.attrib['id']) + 1
+                for subelem in elem:
+                    subelement = ET.SubElement(element, subelem.tag,
+                                               subelem.attrib)
+                    subelement.text = subelem.text
+                    for sub in subelem:
+                        subsubelement = ET.SubElement(subelement,
+                                                      sub.tag, sub.attrib)
+                        # print(subsubelement.attrib)
+                        subsubelement.text = sub.text
+                last_curve_id = int(element.attrib['id'])
 
-    #     # load geometries file
-    #     geomTree = ET.parse(geometry_file)
-    #     geomRoot = geomTree.getroot()
-    #     # self.geometries = geomRoot.find("Mesh")
-    #     for elem in geomRoot.find("Mesh"):
-    #         self.geometries.append(elem)
-
-    #     # load the discrete elements file
-    #     if discrete_file is None:
-    #         pass
-    #     elif self.discrete is None:
-    #         self.discrete = ET.SubElement(self.root, 'Discrete')
-    #         self.discrete.set('from', discrete_file)
-
-    #     # read and copy meshdomains
-    #     for elem in root[tags.index('MeshDomains')]:
-    #         element = ET.SubElement(self.domains, elem.tag, elem.attrib)
-    #         for subelem in elem:
-    #             subelement = ET.SubElement(element, subelem.tag,
-    #                                        subelem.attrib)
-    #             subelement.text = subelem.text
-
-    #     # read and copy meshdata
-    #     for elem in root[tags.index('MeshData')]:
-    #         element = ET.SubElement(self.mesh_data, elem.tag, elem.attrib)
-    #         for subelem in elem:
-    #             subelement = ET.SubElement(element, subelem.tag,
-    #                                        subelem.attrib)
-    #             subelement.text = subelem.text
-
-    #     # read and copy the boundary elements
-    #     for elem in root[tags.index('Boundary')]:
-    #         element = ET.SubElement(self.boundaries, elem.tag, elem.attrib)
-    #         for subelem in elem:
-    #             subelement = ET.SubElement(element, subelem.tag)
-    #             subelement.text = subelem.text
-
-    #     # read and copy rigid
-    #     for elem in root[tags.index('Rigid')]:
-    #         element = ET.SubElement(self.rigid, elem.tag, elem.attrib)
-    #         for subelem in elem:
-    #             subelement = ET.SubElement(element, subelem.tag,
-    #                                        subelem.attrib)
-    #             subelement.text = subelem.text
-
-    #     # read and copy the contact elements
-    #     for elem in root[tags.index('Contact')]:
-    #         element = ET.SubElement(self.contact, elem.tag, elem.attrib)
-    #         for subelem in elem:
-    #             subelement = ET.SubElement(element, subelem.tag,
-    #                                        subelem.attrib)
-    #             subelement.text = subelem.text
-
-    #     # load the looadcurves and retrieve the last curve
-    #     if self.loaddata is None:
-    #         self.loaddata = ET.SubElement(self.root, 'LoadData')
-
-    #     last_curve_id = None
-    #     if 'LoadData' in tags:
-    #         for elem in root[tags.index('LoadData')]:
-    #             element = ET.SubElement(self.loaddata, elem.tag, elem.attrib)
-    #             if element.attrib['id'] != '0':
-    #                 self.loadcurve_id = int(
-    #                     element.attrib['id']) + 1
-    #             for subelem in elem:
-    #                 subelement = ET.SubElement(element, subelem.tag,
-    #                                            subelem.attrib)
-    #                 subelement.text = subelem.text
-    #                 for sub in subelem:
-    #                     subsubelement = ET.SubElement(subelement,
-    #                                                   sub.tag, sub.attrib)
-    #                     # print(subsubelement.attrib)
-    #                     subsubelement.text = sub.text
-    #             last_curve_id = int(element.attrib['id'])
-
-    #         # retrieve the last curve id in order to append new curves
-    #         self.loadcurve_id = last_curve_id - 1
+            # retrieve the last curve id in order to append new curves
+            self.loadcurve_id = last_curve_id
 
     def add_output(self, plot_file_parameters, logfile_parameters):
         """Sets the output parameters of the analysis.
@@ -395,7 +324,7 @@ class FEBioExporter4:
         -------
 
         """
-        command = ["febio4", f"-{mode}", '{}'.format(model_filename)]
+        command = ["febio3", f"-{mode}", '{}'.format(model_filename)]
         command += args
         print(command)
         subprocess.run(command,	cwd=directory)
@@ -490,25 +419,14 @@ class FEBioExporter4:
                 }
             },
             'rigid_connector_data': {
-                # 'connector_forces': {
-                #     'data': 'RCFx;RCFy;RCFz',
-                #     'file': None,
-                #     'ids': None
-                # },
-                # 'connector_moments': {
-                #     'data': 'RCMx;RCMy;RCMz',
-                #     'file': None,
-                #     'ids': None
-                # }
-                'connector_translation': {
-                    'data': 'RCx;RCy;RCz',
+                'connector_forces': {
+                    'data': 'RCFx;RCFy;RCFz',
                     'file': None,
                     'ids': None
                 },
-                'connector_rotation': {
-                    'data': 'RCthx;RCthy;RCthz',
+                'connector_moments': {
+                    'data': 'RCMx;RCMy;RCMz',
                     'file': None,
-                    'ids': None
-                }
+                    'ids': None}
             },
         })
