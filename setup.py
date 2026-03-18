@@ -11,11 +11,7 @@ from setuptools import setup
 setup(name='febio_exporter',
       version='1.0.0',
       description='create .feb models for FEBio suite',
-      author='Dimitar Stanev',
+      author='Dimitar Stanev, Konstantinos Risvas',
       license='GPL v3',
       packages=['febio_exporter', 'febio_exporter_4'],
-      # package_data={'febio_exporter': ['__init__.py',
-      #                                  'model.py']
-      #               },
-      # include_package_data=True
       )

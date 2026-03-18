@@ -130,8 +130,8 @@ class Rigid:
 		rb.text = str(rigid_body_id)
 		dof_elem = ET.SubElement(constraint_element, 'dof')
 		dof_elem.text = str(dof)
-		load_type = ET.SubElement(constraint_element, 'load_type')
-		load_type.text = str(load_type)
+		load_type_el = ET.SubElement(constraint_element, 'load_type')
+		load_type_el.text = str(load_type)
 		relative_el = ET.SubElement(constraint_element, 'relative')
 		relative_el.text = str(relative)
 		value_el = ET.SubElement(

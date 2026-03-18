@@ -139,7 +139,13 @@ class FEBioExporter:
 
         # ensure that the loaddata are sorted
         loaddata = tree.find("LoadData")
-        sort_children(loaddata, 'id')
+        # check if it has any elements
+        l = 0
+        for i in loaddata:
+            l += 1
+
+        if l > 0:
+            sort_children(loaddata, 'id')
 
         # with open(file_path, 'wb') as f:  # Python 3 : 'wb', not 'w'
         #     # f.write(xmlstr.encode("utf-8"))
@@ -179,7 +185,7 @@ class FEBioExporter:
             element = ET.SubElement(self.materials, elem.tag, elem.attrib)
             for subelem in elem:
                 subelement = ET.SubElement(element, subelem.tag,
-                subelem.attrib)
+                                           subelem.attrib)
                 subelement.text = subelem.text
                 for sub in subelem:
                     subsubelement = ET.SubElement(subelement,
@@ -327,7 +333,7 @@ class FEBioExporter:
         command = ["febio3", f"-{mode}", '{}'.format(model_filename)]
         command += args
         print(command)
-        subprocess.run(command,	cwd=directory)
+        subprocess.run(command, cwd=directory)
 
     def visualize(self, geometries):
         """

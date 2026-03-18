@@ -139,6 +139,7 @@ class FEBioExporter4:
             print("output_dir exists")
 
         tree = ET.ElementTree(self.root)
+
         # ensure that the loaddata curves are sorted
         try:
             loaddata = tree.find("LoadData")
@@ -425,14 +426,25 @@ class FEBioExporter4:
                 }
             },
             'rigid_connector_data': {
-                'connector_forces': {
-                    'data': 'RCFx;RCFy;RCFz',
+                # 'connector_forces': {
+                #     'data': 'RCFx;RCFy;RCFz',
+                #     'file': None,
+                #     'ids': None
+                # },
+                # 'connector_moments': {
+                #     'data': 'RCMx;RCMy;RCMz',
+                #     'file': None,
+                #     'ids': None
+                # }
+                'connector_translation': {
+                    'data': 'RCx;RCy;RCz',
                     'file': None,
                     'ids': None
                 },
-                'connector_moments': {
-                    'data': 'RCMx;RCMy;RCMz',
+                'connector_rotation': {
+                    'data': 'RCthx;RCthy;RCthz',
                     'file': None,
-                    'ids': None}
+                    'ids': None
+                }
             },
         })

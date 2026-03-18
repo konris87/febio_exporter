@@ -51,6 +51,7 @@ class Contact:
             self.root = root
 
         assert (contact_type in ['sliding-facet-on-facet', 'sliding-elastic',
+                                 'sliding-node-on-facet',
                                  'tied-node-on-facet', 'tied-facet-on-facet',
                                  'tied-elastic'])
         contact = ET.SubElement(self.root, 'contact',

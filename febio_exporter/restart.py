@@ -22,6 +22,7 @@ class FEBioRestart(febio_exporter.FEBioExporter):
 		self.loadcurve_id = model.loadcurve_id
 		self.step = Et.SubElement(self.root, 'Step')
 		self.loaddata = Et.SubElement(self.root, 'LoadData')
+		self.step_counter = 1
 
 	def add_restart_step(self, name, parameters, use_must_point=0):
 		step_el = Et.SubElement(

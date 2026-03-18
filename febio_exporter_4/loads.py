@@ -64,6 +64,42 @@ class Loads:
         self.parent.loadcurve_id += 1
         return self.parent.loadcurve_id
 
+    def add_surface_force(self, name, surface_name, scale_factor, direction,
+                          root=None):
+        """
+
+        Parameters
+        ----------
+        name
+        surface_name
+        scale_factor
+        direction
+        root
+
+        Returns
+        -------
+
+        """
+        if root is None:
+            root = self.parent.loads
+        load_element = ET.SubElement(
+            self.parent.loads, 'surface_load',
+            attrib={'name': name,
+                    'type': 'force',
+                    'surface': surface_name})
+        scale_el = ET.SubElement(
+            load_element, 'scale',
+            attrib={'lc': str(self.parent.loadcurve_id + 1)}
+        )
+        scale_el.text = str(scale_factor)
+        self.parent.loadcurve_id += 1
+
+        direction_el = ET.SubElement(
+            load_element, 'force')
+        direction_el.text = to_xml_field(direction)
+
+        return self.parent.loadcurve_id
+
     def add_nodal_load(self, name, dof, node_set_name, scale_factor):
         """Adds a nodal load.
 
@@ -87,10 +123,38 @@ class Loads:
         assert (dof in ['x', 'y', 'z'])
         load_element = ET.SubElement(self.parent.loads, 'nodal_load',
                                      attrib={'name': name,
-                                             'bc': dof,
+                                             'type': 'nodal_load',
                                              'node_set': node_set_name})
+        dof_el = ET.SubElement(load_element, 'dof')
+        dof_el.text = dof
         scale = ET.SubElement(load_element, 'scale',
                               attrib={'lc': str(self.parent.loadcurve_id)})
         scale.text = str(scale_factor)
         self.parent.loadcurve_id = self.parent.loadcurve_id + 1
         return self.parent.loadcurve_id - 1
+
+    def add_nodal_force(self, name, node_set, scale=(1, 1, 1)):
+        """
+
+        Parameters
+        ----------
+        name
+        node_set
+        scale
+
+        Returns
+        -------
+
+        """
+        load_element = ET.SubElement(
+            self.parent.loads, 'nodal_load',
+            attrib={'name': name,
+                    'type': 'nodal_force',
+                    'node_set': node_set})
+        value_el = ET.SubElement(
+            load_element, 'value',
+            attrib={'lc': str(self.parent.loadcurve_id + 1)}
+        )
+        value_el.text = to_xml_field(scale)
+        self.parent.loadcurve_id += 1
+        return self.parent.loadcurve_id

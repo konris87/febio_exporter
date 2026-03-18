@@ -23,7 +23,7 @@ from febio_exporter_4.mesh import *
 from febio_exporter_4.meshdata import *
 from febio_exporter_4.model import *
 from febio_exporter_4.rigid import *
-from febio_exporter_4.step import *
 from febio_exporter_4.utils import *
 from febio_exporter_4.initial import *
+from febio_exporter_4.step import *
 from febio_exporter_4.restart import *
